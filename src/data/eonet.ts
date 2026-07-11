@@ -10,41 +10,86 @@ const BASE_URL = 'https://eonet.gsfc.nasa.gov/api/v3';
 let categoriesCache: EonetCategory[] | null = null;
 let sourcesCache: EonetSourceDetail[] | null = null;
 const layersCache = new Map<string, EonetLayer[]>();
-
 /**
- * Self-healing JSON parser that detects common EONET API truncation errors.
- * If the response was truncated mid-polygon coordinates array, it attempts to
- * dynamically insert missing brackets to make the JSON syntactically valid.
+ * Self-healing JSON parser that handles truncated JSON strings.
  */
 function healAndParseJson(text: string): any {
-  let attempts = 0;
-  let currentText = text;
-  while (attempts < 20) {
-    try {
-      return JSON.parse(currentText);
-    } catch (e: any) {
-      attempts++;
-      const msg = e.message;
-      const match = msg.match(/position (\d+)/);
-      if (!match) throw e;
-      const pos = parseInt(match[1]);
-      if (pos >= currentText.length || pos < 0) throw e;
+  try {
+    return JSON.parse(text);
+  } catch (initialError: any) {
+    const len = text.length;
+    let healed = "";
+    const stack: ("[" | "{")[] = [];
+    let inString = false;
+    let escaped = false;
+    
+    for (let i = 0; i < len; i++) {
+      const char = text[i];
       
-      const char = currentText[pos];
-      if (char === '}' || char === ']') {
-        // Insert a closing bracket before this character
-        currentText = currentText.slice(0, pos) + ']' + currentText.slice(pos);
-      } else if (char === ',') {
-        // Remove trailing or extra comma
-        currentText = currentText.slice(0, pos) + currentText.slice(pos + 1);
+      if (inString) {
+        healed += char;
+        if (char === '\\') {
+          escaped = !escaped;
+        } else if (char === '"' && !escaped) {
+          inString = false;
+        } else {
+          escaped = false;
+        }
       } else {
-        // Fallback: if we hit a position we can't heal directly, attempt to close outer array/object
-        throw e;
+        if (char === '"') {
+          inString = true;
+          escaped = false;
+          healed += char;
+        } else if (char === '{') {
+          stack.push('{');
+          healed += char;
+        } else if (char === '[') {
+          stack.push('[');
+          healed += char;
+        } else if (char === '}') {
+          while (stack.length > 0 && stack[stack.length - 1] === '[') {
+            stack.pop();
+            healed += ']';
+          }
+          if (stack.length > 0 && stack[stack.length - 1] === '{') {
+            stack.pop();
+            healed += '}';
+          } else {
+            healed += '}';
+          }
+        } else if (char === ']') {
+          while (stack.length > 0 && stack[stack.length - 1] === '{') {
+            stack.pop();
+            healed += '}';
+          }
+          if (stack.length > 0 && stack[stack.length - 1] === '[') {
+            stack.pop();
+            healed += ']';
+          } else {
+            healed += ']';
+          }
+        } else {
+          healed += char;
+        }
       }
     }
+    
+    if (inString) {
+      healed += '"';
+    }
+    while (stack.length > 0) {
+      const open = stack.pop();
+      healed += open === '{' ? '}' : ']';
+    }
+    
+    try {
+      return JSON.parse(healed);
+    } catch {
+      throw initialError;
+    }
   }
-  throw new Error('Failed to parse and heal EONET API response');
 }
+
 
 /**
  * Cleans event coordinates, removing partial coordinate points or invalid structures
