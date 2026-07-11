@@ -1,0 +1,473 @@
+.dp-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 380px;
+  background: linear-gradient(to right, rgba(5,7,10,0.92) 50%, rgba(5,7,10,0.6) 80%, transparent);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  z-index: 90;
+  backdrop-filter: blur(8px);
+  animation: dp-in 250ms ease-out forwards;
+}
+
+.dp-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: var(--space-8) var(--space-6) var(--space-6) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: none; /* Hide scrollbar Firefox */
+}
+.dp-content::-webkit-scrollbar {
+  display: none; /* Hide scrollbar Chrome/Safari */
+}
+
+/* Close button placed relatively inside padding */
+.dp-close {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  color: var(--color-text-faint);
+  cursor: pointer;
+  padding: var(--space-2);
+  margin-bottom: var(--space-4);
+  transition: color 200ms;
+}
+.dp-close:hover {
+  color: var(--color-text-primary);
+}
+
+.dp-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-family-mono);
+  font-size: var(--text-meta);
+  margin-bottom: var(--space-3);
+}
+
+.dp-category {
+  color: var(--color-accent);
+  letter-spacing: 0.1em;
+}
+
+.dp-date {
+  color: var(--color-text-faint);
+  letter-spacing: 0.05em;
+}
+
+.dp-title {
+  font-size: var(--text-title);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.03em;
+  color: var(--color-text-primary);
+  line-height: 1.25;
+  margin-bottom: var(--space-4);
+}
+
+.dp-desc {
+  font-size: var(--text-body);
+  line-height: 1.6;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-6);
+}
+
+/* ── Card Stack ── */
+.dp-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.dp-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  padding: var(--space-3) var(--space-4);
+}
+
+.dp-card-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+  font-weight: var(--font-weight-medium);
+}
+
+.dp-card-value {
+  font-size: var(--text-title);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
+}
+
+.dp-card-value--accent {
+  color: var(--color-accent);
+}
+
+.dp-card-value--open {
+  color: #38ef7d; /* bright live green */
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+}
+
+.dp-card-value--closed {
+  color: #ff5544; /* bright alert red */
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+}
+
+.dp-card-unit {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.dp-card-sub {
+  font-size: 0.68rem;
+  color: var(--color-text-faint);
+  font-style: italic;
+}
+
+.dp-card--satellite {
+  border-left: 2px solid var(--color-accent);
+}
+
+/* ── Layers display ── */
+.dp-card--layers {
+  padding-top: var(--space-3);
+}
+
+.dp-layer-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.dp-layer-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-2) var(--space-3);
+}
+
+.dp-layer-name {
+  font-size: var(--text-body);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 190px;
+}
+
+.dp-layer-type {
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  font-family: var(--font-family-mono);
+}
+
+.dp-layer-more {
+  font-size: 0.68rem;
+  color: var(--color-text-faint);
+  font-style: italic;
+  margin-top: var(--space-1);
+}
+
+/* ── Historical Track Path Timeline ── */
+.dp-card--track {
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.dp-card--track::-webkit-scrollbar {
+  display: none;
+}
+
+.dp-track-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-left: var(--space-2);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dp-track-point {
+  position: relative;
+  padding-left: var(--space-4);
+}
+
+.dp-track-bullet {
+  position: absolute;
+  left: -4.5px;
+  top: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 4px var(--color-accent);
+}
+
+.dp-track-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dp-track-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dp-track-date {
+  font-family: var(--font-family-mono);
+  font-size: 0.68rem;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.dp-track-time {
+  font-family: var(--font-family-mono);
+  font-size: 0.62rem;
+  color: var(--color-text-faint);
+}
+
+.dp-track-coords {
+  font-family: var(--font-family-mono);
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+}
+
+.dp-track-mag {
+  font-family: var(--font-family-mono);
+  font-size: 0.65rem;
+  color: var(--color-accent);
+}
+
+/* ── Reporting sources agency grid ── */
+.dp-sources-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dp-sources-title {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+  font-weight: var(--font-weight-medium);
+}
+
+.dp-sources-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dp-source-pill {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: var(--space-2) var(--space-3);
+  text-decoration: none;
+  transition: all 180ms ease;
+}
+.dp-source-pill:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-accent);
+}
+
+.dp-pill-name {
+  font-size: var(--text-body);
+  color: var(--color-text-muted);
+  transition: color 180ms;
+}
+.dp-source-pill:hover .dp-pill-name {
+  color: var(--color-text-primary);
+}
+
+.dp-pill-arrow {
+  color: var(--color-text-faint);
+  transition: transform 180ms, color 180ms;
+}
+.dp-source-pill:hover .dp-pill-arrow {
+  transform: translate(2px, -2px);
+  color: var(--color-accent);
+}
+
+@keyframes dp-in {
+  from { opacity: 0; transform: translateX(-15px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@media (max-width: 768px) {
+  .dp-overlay {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    height: 100%;
+    background: none;
+    border-right: none;
+    border-top: none;
+    transform: none;
+    box-shadow: none;
+    animation: none;
+  }
+
+  .dp-overlay .sheet-handle {
+    display: none !important;
+  }
+
+  .dp-content {
+    padding: var(--space-2) var(--space-4) var(--space-4) var(--space-4);
+  }
+
+  .dp-close {
+    display: none !important; /* Hide close button, mobile sheet header back button handles it */
+  }
+
+  .dp-card {
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .dp-source-pill {
+    border-radius: 8px;
+  }
+
+  .dp-layer-item {
+    border-radius: 6px;
+  }
+
+  .dp-card--track {
+    max-height: 180px;
+  }
+}
+
+/* ── Custom Telemetry styling ── */
+.telemetry-blink {
+  animation: telemetry-pulse 1.5s ease-in-out infinite;
+  color: var(--color-accent) !important;
+}
+
+@keyframes telemetry-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.dp-card--telemetry-loading {
+  border-left: 2px dashed rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.dp-card--warning {
+  border-left: 2px solid #ff5544;
+  background: rgba(255, 85, 68, 0.02);
+}
+
+.dp-card--settlement {
+  border-left: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.dp-card--air-quality {
+  border-left: 2px solid #38ef7d;
+}
+
+.dp-card--street-view {
+  border-left: 2px solid var(--color-accent);
+}
+
+.dp-telemetry-btn {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-2);
+  padding: 8px var(--space-3);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.dp-telemetry-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 8px rgba(255, 85, 51, 0.15);
+}
+
+.dp-telemetry-btn.active {
+  background: var(--color-accent);
+  color: #05070a;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 12px rgba(255, 85, 51, 0.3);
+}
+
+.dp-telemetry-btn:active {
+  transform: scale(0.98);
+}
+
+/* ── Telemetry Details Data Grid ── */
+.dp-telemetry-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+}
+
+.dp-tel-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-family-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  padding: 2px 0;
+}
+
+.dp-tel-key {
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+}
+
+.dp-tel-val {
+  color: var(--color-text-primary);
+  text-align: right;
+}
+
+.dp-tel-section-title {
+  font-family: var(--font-family-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: var(--space-1);
+  text-transform: uppercase;
+}
+
+
+

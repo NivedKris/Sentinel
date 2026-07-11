@@ -1,0 +1,37 @@
+.scroll-hint {
+  position: fixed;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-1);
+
+  opacity: 0;
+  animation: hint-appear 600ms var(--ease-out-expo) 1.5s forwards;
+}
+
+.scroll-hint-line {
+  width: 1px;
+  height: 48px;
+  background: var(--color-text-faint);
+  animation: hint-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes hint-appear {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes hint-pulse {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 0.8; }
+}

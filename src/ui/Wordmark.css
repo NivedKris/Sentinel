@@ -1,0 +1,29 @@
+.wordmark {
+  position: fixed;
+  top: var(--space-4);
+  left: var(--space-4);
+  z-index: 100;
+
+  font-family: var(--font-family-display);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.2em;
+  color: var(--color-text-faint);
+  text-transform: uppercase;
+  transition: color var(--duration-panel) var(--ease-out-expo);
+  cursor: default;
+  user-select: none;
+}
+
+.wordmark:hover {
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 768px) {
+  .wordmark {
+    top: var(--space-3);
+    left: var(--space-3);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+  }
+}

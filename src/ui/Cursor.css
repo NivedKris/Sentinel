@@ -1,0 +1,144 @@
+/* Hide native cursor everywhere on hover-capable screens */
+@media (hover: hover) and (pointer: fine) {
+  *, *::before, *::after { cursor: none !important; }
+}
+
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+}
+
+/* Hide cursor elements entirely on touch/mobile screens */
+@media (hover: none), (max-width: 768px) {
+  .cursor {
+    display: none !important;
+  }
+  *, *::before, *::after {
+    cursor: auto !important;
+  }
+}
+
+/* Outer tracking ring */
+.cursor-ring {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  top: -13px;
+  left: -13px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transition:
+    width 200ms cubic-bezier(0.25, 1, 0.5, 1),
+    height 200ms cubic-bezier(0.25, 1, 0.5, 1),
+    top 200ms cubic-bezier(0.25, 1, 0.5, 1),
+    left 200ms cubic-bezier(0.25, 1, 0.5, 1),
+    border-radius 200ms cubic-bezier(0.25, 1, 0.5, 1),
+    border-color 200ms ease;
+}
+
+/* Horizontal crosshair */
+.cursor-h {
+  position: absolute;
+  width: 10px;
+  height: 1px;
+  top: -0.5px;
+  left: -5px;
+  background: rgba(255, 255, 255, 0.5);
+  transition: width 200ms ease, left 200ms ease;
+}
+
+/* Vertical crosshair */
+.cursor-v {
+  position: absolute;
+  width: 1px;
+  height: 10px;
+  top: -5px;
+  left: -0.5px;
+  background: rgba(255, 255, 255, 0.5);
+  transition: height 200ms ease, top 200ms ease;
+}
+
+/* ── Text Label ── */
+.cursor-label {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  transform: translateX(-50%);
+  font-family: var(--font-family-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.15em;
+  color: var(--color-text-primary);
+  opacity: 0;
+  transition: opacity 180ms ease;
+  pointer-events: none;
+  white-space: nowrap;
+  background: rgba(5, 7, 10, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1px 4px;
+}
+
+/* ── Dragging state ───────────────────────────────────── */
+.cursor--drag .cursor-ring {
+  width: 36px;
+  height: 36px;
+  top: -18px;
+  left: -18px;
+  border-color: var(--color-accent);
+}
+.cursor--drag .cursor-h {
+  width: 16px;
+  left: -8px;
+  background: var(--color-accent);
+}
+.cursor--drag .cursor-v {
+  height: 16px;
+  top: -8px;
+  background: var(--color-accent);
+}
+.cursor--drag .cursor-label {
+  color: var(--color-accent);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Pointer (hover over clickable) state ────────────── */
+.cursor--pointer .cursor-ring {
+  width: 16px;
+  height: 16px;
+  top: -8px;
+  left: -8px;
+  border-color: rgba(255, 255, 255, 0.8);
+}
+.cursor--pointer .cursor-h { width: 0; }
+.cursor--pointer .cursor-v { height: 0; }
+.cursor--pointer .cursor-label {
+  color: var(--color-text-primary);
+}
+
+/* ── Scroll (hover over scrollable) state ────────────── */
+.cursor--scroll .cursor-ring {
+  width: 20px;
+  height: 28px;
+  top: -14px;
+  left: -10px;
+  border-radius: 6px; /* Mouse capsule shape */
+  border-color: rgba(255, 255, 255, 0.65);
+}
+.cursor--scroll .cursor-h {
+  width: 6px;
+  left: -3px;
+  background: rgba(255, 255, 255, 0.4);
+}
+.cursor--scroll .cursor-v {
+  height: 14px;
+  top: -7px;
+  background: rgba(255, 255, 255, 0.7);
+}
+.cursor--scroll .cursor-label {
+  color: var(--color-text-muted);
+}

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Deep cyber background -->
+  <rect width="512" height="512" rx="128" fill="#05070A"/>
+  <!-- Subtle radar rings -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="rgba(232, 98, 44, 0.15)" stroke-width="6" stroke-dasharray="16 12"/>
+  <circle cx="256" cy="256" r="140" fill="none" stroke="rgba(232, 98, 44, 0.3)" stroke-width="4"/>
+  <!-- The Earth outline -->
+  <circle cx="256" cy="256" r="80" fill="#0B1E2E" stroke="#E8622C" stroke-width="12"/>
+  <!-- High tech crosshairs -->
+  <path d="M256 20v60M256 432v60M20 256h60M432 256h60" stroke="#E8622C" stroke-width="10" stroke-linecap="round" opacity="0.8"/>
+  <!-- Orbiting satellite path -->
+  <path d="M120 120 C 180 80, 332 80, 392 120 C 452 160, 452 352, 392 392 C 332 432, 180 432, 120 392 Z" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="4" stroke-dasharray="8 6"/>
+  <!-- Active satellite node -->
+  <circle cx="392" cy="120" r="16" fill="#F4F5F3"/>
+  <!-- Satellite sensor beam -->
+  <polygon points="392,120 236,216 276,276" fill="rgba(232, 98, 44, 0.25)"/>
+  <!-- Outer glowing accent corner markers -->
+  <path d="M70 120 A 180 180 0 0 1 120 70" fill="none" stroke="#E8622C" stroke-width="12" stroke-linecap="round"/>
+  <path d="M392 70 A 180 180 0 0 1 442 120" fill="none" stroke="#E8622C" stroke-width="12" stroke-linecap="round"/>
+  <path d="M442 392 A 180 180 0 0 1 392 442" fill="none" stroke="#E8622C" stroke-width="12" stroke-linecap="round"/>
+  <path d="M120 442 A 180 180 0 0 1 70 392" fill="none" stroke="#E8622C" stroke-width="12" stroke-linecap="round"/>
+</svg>

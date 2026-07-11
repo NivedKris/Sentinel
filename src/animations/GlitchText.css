@@ -1,0 +1,79 @@
+@keyframes glitch {
+  0%   { clip-path: inset(20% 0 50% 0); }
+  5%   { clip-path: inset(10% 0 60% 0); }
+  10%  { clip-path: inset(15% 0 55% 0); }
+  15%  { clip-path: inset(25% 0 35% 0); }
+  20%  { clip-path: inset(30% 0 40% 0); }
+  25%  { clip-path: inset(40% 0 20% 0); }
+  30%  { clip-path: inset(10% 0 60% 0); }
+  35%  { clip-path: inset(15% 0 55% 0); }
+  40%  { clip-path: inset(25% 0 35% 0); }
+  45%  { clip-path: inset(30% 0 40% 0); }
+  50%  { clip-path: inset(20% 0 50% 0); }
+  55%  { clip-path: inset(10% 0 60% 0); }
+  60%  { clip-path: inset(15% 0 55% 0); }
+  65%  { clip-path: inset(25% 0 35% 0); }
+  70%  { clip-path: inset(30% 0 40% 0); }
+  75%  { clip-path: inset(40% 0 20% 0); }
+  80%  { clip-path: inset(20% 0 50% 0); }
+  85%  { clip-path: inset(10% 0 60% 0); }
+  90%  { clip-path: inset(15% 0 55% 0); }
+  95%  { clip-path: inset(25% 0 35% 0); }
+  100% { clip-path: inset(30% 0 40% 0); }
+}
+
+.glitch-text {
+  position: relative;
+  display: inline-block;
+  color: var(--color-accent, #e8622c);
+  cursor: default;
+  user-select: none;
+}
+
+/* ::after layer — right-shifted, red shadow */
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 10px;
+  color: inherit;
+  background: transparent;
+  overflow: hidden;
+  clip-path: inset(0 0 0 0);
+  text-shadow: var(--after-shadow, -5px 0 rgba(232,98,44,0.8));
+  animation: glitch var(--after-duration, 1.5s) infinite linear alternate-reverse;
+}
+
+/* ::before layer — left-shifted, cyan shadow */
+.glitch-text::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: -10px;
+  color: inherit;
+  background: transparent;
+  overflow: hidden;
+  clip-path: inset(0 0 0 0);
+  text-shadow: var(--before-shadow, 5px 0 rgba(0,200,255,0.6));
+  animation: glitch var(--before-duration, 1s) infinite linear alternate-reverse;
+}
+
+/* Hover-only variant: pseudo-elements are invisible until hover */
+.glitch-text--hover-only::after,
+.glitch-text--hover-only::before {
+  animation: none;
+  opacity: 0;
+  text-shadow: none;
+}
+
+.glitch-text--hover-only:hover::after {
+  animation: glitch var(--after-duration, 1.5s) infinite linear alternate-reverse;
+  opacity: 1;
+  text-shadow: var(--after-shadow, -5px 0 rgba(232,98,44,0.8));
+}
+
+.glitch-text--hover-only:hover::before {
+  animation: glitch var(--before-duration, 1s) infinite linear alternate-reverse;
+  opacity: 1;
+  text-shadow: var(--before-shadow, 5px 0 rgba(0,200,255,0.6));
+}

@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Space+Grotesk:wght@400;500;700&family=Space+Mono&display=swap');
+@import './tokens.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none; /* Lock viewport bounce */
+  -webkit-tap-highlight-color: transparent; /* Clean tap visual */
+}
+
+/* ── Mobile UI Sheets Utility Classes ── */
+.sheet-handle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sheet-handle {
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    margin: 0 auto var(--space-4) auto;
+    cursor: pointer;
+    transition: background 200ms;
+  }
+  .sheet-handle:hover, .sheet-handle:active {
+    background: rgba(255, 255, 255, 0.4);
+  }
+}
+
+/* Remove all default button styles */
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+}
+
+/* Remove default link styles */
+a {
+  color: inherit;
+}
+
+/* Canvas fills its container */
+canvas {
+  display: block;
+}

@@ -1,0 +1,33 @@
+.status-line {
+  position: fixed;
+  bottom: var(--space-4);
+  left: var(--space-4);
+  z-index: 100;
+
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  user-select: none;
+
+  opacity: 0;
+  animation: status-fade-in var(--duration-panel) var(--ease-out-expo) 0.2s forwards;
+}
+
+.status-category {
+  color: var(--color-accent);
+}
+
+.status-divider {
+  color: var(--color-text-faint);
+}
+
+.status-count {
+  color: var(--color-text-muted);
+}
+
+@keyframes status-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
