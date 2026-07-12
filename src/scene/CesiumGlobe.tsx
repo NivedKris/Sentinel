@@ -86,6 +86,22 @@ export default function CesiumGlobe({
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
 
+  // Satellite Tracking & Animation Refs
+  const satelliteEntityRef = useRef<Cesium.Entity | null>(null);
+  const telemetryBeamEntityRef = useRef<Cesium.Entity | null>(null);
+  const groundRippleEntityRef = useRef<Cesium.Entity | null>(null);
+
+  const isAnimatingRef = useRef<boolean>(false);
+  const animationPhaseRef = useRef<'orbit' | 'flight' | 'beam' | 'transition'>('orbit');
+  const animationStartTimeRef = useRef<number>(0);
+  const startPosRef = useRef<Cesium.Cartesian3 | null>(null);
+  const targetPosRef = useRef<Cesium.Cartesian3 | null>(null);
+  const eventGroundPosRef = useRef<Cesium.Cartesian3 | null>(null);
+  const satellitePositionRef = useRef<Cesium.Cartesian3>(Cesium.Cartesian3.fromDegrees(0, 0, 400000));
+  const satelliteOrientationRef = useRef<Cesium.Quaternion>(new Cesium.Quaternion());
+  const normalOrbitAngleRef = useRef<number>(0);
+  const groundRippleRadiusRef = useRef<number>(0);
+
   // Sync refs to avoid stale closures in event handlers
   const phaseRef = useRef(phase);
   const selectedEventRef = useRef(selectedEvent);
@@ -178,6 +194,70 @@ export default function CesiumGlobe({
 
     viewerRef.current = viewer;
 
+    // Add 3D Satellite Model
+    const satelliteEntity = viewer.entities.add({
+      id: 'satellite-core',
+      position: new Cesium.CallbackProperty(() => Cesium.Cartesian3.clone(satellitePositionRef.current), false) as any,
+      orientation: new Cesium.CallbackProperty(() => Cesium.Quaternion.clone(satelliteOrientationRef.current), false) as any,
+      model: {
+        uri: window.location.origin + '/satellite.glb',
+        minimumPixelSize: 160,
+        maximumScale: 50000,
+        scale: 25000.0
+      }
+    });
+    satelliteEntityRef.current = satelliteEntity;
+
+    // Add Telemetry Beam Polyline (continuous orange ray gun beam)
+    const telemetryBeamEntity = viewer.entities.add({
+      id: 'satellite-telemetry-beam',
+      polyline: {
+        positions: new Cesium.CallbackProperty(() => {
+          if (selectedEventRef.current && animationPhaseRef.current !== 'flight' && targetPosRef.current && eventGroundPosRef.current) {
+            return [targetPosRef.current, eventGroundPosRef.current];
+          }
+          return [];
+        }, false),
+        width: 2.0,
+        material: new Cesium.PolylineGlowMaterialProperty({
+          glowPower: 0.2,
+          color: Cesium.Color.fromCssColorString('#f97316'), // glowing orange ray
+          taperPower: 1.0
+        }),
+        show: new Cesium.CallbackProperty(() => {
+          return selectedEventRef.current && animationPhaseRef.current !== 'flight';
+        }, false)
+      }
+    });
+    telemetryBeamEntityRef.current = telemetryBeamEntity;
+
+    // Add Ground-level Radar Ripple Ellipse (orange pulse)
+    const groundRippleEntity = viewer.entities.add({
+      id: 'satellite-ground-ripple',
+      position: new Cesium.CallbackProperty(() => {
+        return eventGroundPosRef.current 
+          ? Cesium.Cartesian3.clone(eventGroundPosRef.current) 
+          : Cesium.Cartesian3.fromDegrees(0, 0, 0);
+      }, false) as any,
+      ellipse: {
+        semiMajorAxis: new Cesium.CallbackProperty(() => Math.max(1.0, groundRippleRadiusRef.current), false),
+        semiMinorAxis: new Cesium.CallbackProperty(() => Math.max(1.0, groundRippleRadiusRef.current), false),
+        material: new Cesium.ColorMaterialProperty(
+          new Cesium.CallbackProperty(() => {
+            if (animationPhaseRef.current === 'beam') {
+              const elapsed = Math.min(1.0, (Date.now() - animationStartTimeRef.current) / 1200);
+              return Cesium.Color.fromCssColorString('#f97316').withAlpha(0.65 * (1.0 - elapsed));
+            }
+            return Cesium.Color.TRANSPARENT;
+          }, false)
+        ),
+        height: 0,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        show: new Cesium.CallbackProperty(() => animationPhaseRef.current === 'beam', false)
+      }
+    });
+    groundRippleEntityRef.current = groundRippleEntity;
+
     // Click handler for picking entities
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
     handler.setInputAction((click: any) => {
@@ -216,11 +296,118 @@ export default function CesiumGlobe({
     canvas.addEventListener('touchstart', setInteractingTrue);
     canvas.addEventListener('touchend', setInteractingFalse);
 
-    // Idle rotation listener
+    // Idle rotation + Satellite Orbit and Chase Camera Loop
     const removePreRender = viewer.scene.preRender.addEventListener(() => {
-      // Rotate slowly if in intro phase or if no event is selected and user is not dragging
-      if ((phaseRef.current === 'intro' || !selectedEventRef.current) && !isUserInteracting) {
-        viewer.camera.rotate(Cesium.Cartesian3.UNIT_Z, 0.0004);
+      // 1. Advance the normal orbit angle
+      normalOrbitAngleRef.current += 0.0003;
+      
+      const phase = phaseRef.current;
+      const selectedEvent = selectedEventRef.current;
+
+      // 2. Perform updates depending on active animation state
+      if (animationPhaseRef.current === 'orbit') {
+        groundRippleRadiusRef.current = 0;
+        if (selectedEventRef.current && targetPosRef.current) {
+          satellitePositionRef.current = targetPosRef.current;
+        } else {
+          const rad = normalOrbitAngleRef.current;
+          const radius = 6378137 + 400000;
+          const inc = Cesium.Math.toRadians(45);
+          const x = radius * Math.cos(rad);
+          const y = radius * Math.sin(rad) * Math.cos(inc);
+          const z = radius * Math.sin(rad) * Math.sin(inc);
+          satellitePositionRef.current = new Cesium.Cartesian3(x, y, z);
+        }
+
+        // Idle rotate if in intro/category phase and not interacting
+        if ((phase === 'intro' || !selectedEvent) && !isUserInteracting) {
+          viewer.camera.rotate(Cesium.Cartesian3.UNIT_Z, 0.0004);
+        }
+      }
+      else if (animationPhaseRef.current === 'flight') {
+        groundRippleRadiusRef.current = 0;
+        const startTime = animationStartTimeRef.current;
+        const elapsed = Date.now() - startTime;
+        const duration = 3500; // 3.5s flight time
+        let t = Math.min(1.0, elapsed / duration);
+        
+        // easeInOutCubic curve
+        t = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+        const startPos = startPosRef.current || new Cesium.Cartesian3();
+        const targetPos = targetPosRef.current || new Cesium.Cartesian3();
+
+        const startCart = Cesium.Cartographic.fromCartesian(startPos);
+        const targetCart = Cesium.Cartographic.fromCartesian(targetPos);
+        
+        let diffLon = targetCart.longitude - startCart.longitude;
+        if (diffLon > Math.PI) diffLon -= Math.PI * 2;
+        if (diffLon < -Math.PI) diffLon += Math.PI * 2;
+        
+        const currentLat = startCart.latitude + (targetCart.latitude - startCart.latitude) * t;
+        const currentLon = startCart.longitude + diffLon * t;
+        
+        const currentPos = Cesium.Cartesian3.fromRadians(currentLon, currentLat, 400000);
+        satellitePositionRef.current = currentPos;
+
+        if (elapsed >= duration) {
+          animationPhaseRef.current = 'beam';
+          animationStartTimeRef.current = Date.now();
+        }
+      }
+      else if (animationPhaseRef.current === 'beam') {
+        const startTime = animationStartTimeRef.current;
+        const elapsed = Date.now() - startTime;
+        const duration = 1200; // 1.2s beam discharge duration
+
+        // Update ground ripple expansion radius (splash radius up to 500km)
+        const beamElapsed = Math.min(1.0, elapsed / duration);
+        groundRippleRadiusRef.current = beamElapsed * 500000;
+
+        const currentPos = targetPosRef.current || new Cesium.Cartesian3();
+        satellitePositionRef.current = currentPos;
+
+        if (elapsed >= duration) {
+          animationPhaseRef.current = 'transition';
+          animationStartTimeRef.current = Date.now();
+
+          // Smoothly release and zoom down to final event focus
+          if (selectedEventRef.current) {
+            const coords = extractCoordinates(selectedEventRef.current.geometry);
+            if (coords) {
+              const [lon, lat] = coords;
+              const isMobile = window.innerWidth <= 768;
+              const latOffset = isMobile ? 0.8 : 1.05;
+              const pitchAngle = isMobile ? -35 : -35;
+              viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(lon, lat - latOffset, 80000),
+                orientation: {
+                  heading: Cesium.Math.toRadians(0),
+                  pitch: Cesium.Math.toRadians(pitchAngle),
+                  roll: 0.0
+                },
+                duration: 2.0,
+                complete: () => {
+                  isAnimatingRef.current = false;
+                  animationPhaseRef.current = 'orbit';
+                }
+              });
+            }
+          }
+        }
+      }
+      else if (animationPhaseRef.current === 'transition') {
+        groundRippleRadiusRef.current = 0;
+        if (targetPosRef.current) {
+          satellitePositionRef.current = targetPosRef.current;
+        }
+      }
+
+      // 3. Update satellite orientation ref based on current frame position
+      if (satellitePositionRef.current && Cesium.Cartesian3.magnitude(satellitePositionRef.current) > 1.0) {
+        const matrix = Cesium.Transforms.eastNorthUpToFixedFrame(satellitePositionRef.current);
+        const rotationMatrix = Cesium.Matrix4.getMatrix3(matrix, new Cesium.Matrix3());
+        satelliteOrientationRef.current = Cesium.Quaternion.fromRotationMatrix(rotationMatrix);
       }
     });
 
@@ -231,6 +418,14 @@ export default function CesiumGlobe({
       canvas.removeEventListener('mouseup', setInteractingFalse);
       canvas.removeEventListener('touchstart', setInteractingTrue);
       canvas.removeEventListener('touchend', setInteractingFalse);
+
+      // Clean up satellite entities
+      if (viewerRef.current && !viewerRef.current.isDestroyed()) {
+        if (satelliteEntityRef.current) viewerRef.current.entities.remove(satelliteEntityRef.current);
+        if (telemetryBeamEntityRef.current) viewerRef.current.entities.remove(telemetryBeamEntityRef.current);
+        if (groundRippleEntityRef.current) viewerRef.current.entities.remove(groundRippleEntityRef.current);
+      }
+
       viewer.destroy();
       viewerRef.current = null;
     };
@@ -241,7 +436,15 @@ export default function CesiumGlobe({
     const viewer = viewerRef.current;
     if (!viewer) return;
 
-    viewer.entities.removeAll();
+    // Clear only non-satellite entities (markers)
+    const entitiesToRemove: Cesium.Entity[] = [];
+    for (let i = 0; i < viewer.entities.values.length; i++) {
+      const entity = viewer.entities.values[i];
+      if (!entity.id.startsWith('satellite-')) {
+        entitiesToRemove.push(entity);
+      }
+    }
+    entitiesToRemove.forEach(entity => viewer.entities.remove(entity));
 
     events.forEach(event => {
       const coords = extractCoordinates(event.geometry);
@@ -277,7 +480,7 @@ export default function CesiumGlobe({
     });
   }, [events, selectedEvent]);
 
-  // Sync camera positions when selection shifts or new category events load
+  // Sync camera positions and satellite trajectory when selection shifts or new category events load
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer) return;
@@ -286,62 +489,91 @@ export default function CesiumGlobe({
       const coords = extractCoordinates(selectedEvent.geometry);
       if (coords) {
         const [lon, lat] = coords;
-        const isMobile = window.innerWidth <= 768;
-        const latOffset = isMobile ? 0.8 : 1.05;
-        const pitchAngle = isMobile ? -35 : -35;
-        viewer.camera.flyTo({
-          destination: Cesium.Cartesian3.fromDegrees(lon, lat - latOffset, 80000), // Center the point correctly based on pitch angle
-          orientation: {
-            heading: Cesium.Math.toRadians(0), // Facing North
-            pitch: Cesium.Math.toRadians(pitchAngle), // Tilt matching the latitude offset
-            roll: 0.0
-          },
-          duration: 2.2
-        });
-      }
-    } else if (phase !== 'intro') {
-      // If no event is selected, fly to the geographical center (centroid) of the loaded events
-      if (events && events.length > 0) {
-        let totalLon = 0;
-        let totalLat = 0;
-        let count = 0;
+        const targetPos = Cesium.Cartesian3.fromDegrees(lon, lat, 400000);
+        
+        // Only start a new intercept animation if it's not already targeted
+        const isAlreadyTarget = targetPosRef.current && 
+          Cesium.Cartesian3.equalsEpsilon(targetPosRef.current, targetPos, 10.0);
 
-        events.forEach(ev => {
-          const coords = extractCoordinates(ev.geometry);
-          if (coords) {
-            totalLon += coords[0];
-            totalLat += coords[1];
-            count++;
-          }
-        });
+        if (!isAlreadyTarget) {
+          const eventGroundPos = Cesium.Cartesian3.fromDegrees(lon, lat, 0);
+          startPosRef.current = Cesium.Cartesian3.clone(satellitePositionRef.current);
+          targetPosRef.current = targetPos;
+          eventGroundPosRef.current = eventGroundPos;
+          
+          animationPhaseRef.current = 'flight';
+          animationStartTimeRef.current = Date.now();
+          isAnimatingRef.current = true;
 
-        if (count > 0) {
-          const avgLon = totalLon / count;
-          const avgLat = totalLat / count;
-
+          // Smoothly fly camera to a third-person observation perspective of the region (1,500km altitude)
+          const isMobile = window.innerWidth <= 768;
+          const latOffset = isMobile ? 8.0 : 10.0;
+          const altitude = isMobile ? 1200000 : 1500000;
           viewer.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(avgLon, avgLat, 8000000), // Overview centered on concentration of events
+            destination: Cesium.Cartesian3.fromDegrees(lon, lat - latOffset, altitude),
             orientation: {
-              heading: 0,
-              pitch: Cesium.Math.toRadians(-90), // Directly top-down
-              roll: 0
+              heading: Cesium.Math.toRadians(0),
+              pitch: Cesium.Math.toRadians(-40),
+              roll: 0.0
             },
-            duration: 2.5
+            duration: 3.5 // Matches the 3.5s satellite flight duration
           });
-          return;
         }
       }
+    } else {
+      // Clear tracking if event deselected
+      targetPosRef.current = null;
+      eventGroundPosRef.current = null;
+      animationPhaseRef.current = 'orbit';
+      isAnimatingRef.current = false;
 
-      // Fallback fly back out when event is deselected
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(viewer.camera.positionCartographic.longitude * (180 / Math.PI), 20, 15000000),
-        orientation: {
-          heading: viewer.camera.heading,
-          pitch: Cesium.Math.toRadians(-90),
-          roll: 0
-        },
-        duration: 2.0
-      });
+      if (phase !== 'intro') {
+        // If no event is selected, fly to the geographical center (centroid) of the loaded events
+        if (events && events.length > 0) {
+          let totalLon = 0;
+          let totalLat = 0;
+          let count = 0;
+
+          events.forEach(ev => {
+            const coords = extractCoordinates(ev.geometry);
+            if (coords) {
+              totalLon += coords[0];
+              totalLat += coords[1];
+              count++;
+            }
+          });
+
+          if (count > 0) {
+            const avgLon = totalLon / count;
+            const avgLat = totalLat / count;
+
+            viewer.camera.flyTo({
+              destination: Cesium.Cartesian3.fromDegrees(avgLon, avgLat, 8000000), // Overview centered on concentration of events
+              orientation: {
+                heading: 0,
+                pitch: Cesium.Math.toRadians(-90), // Directly top-down
+                roll: 0
+              },
+              duration: 2.5
+            });
+            return;
+          }
+        }
+
+        // Fallback fly back out when event is deselected
+        const fallbackLon = viewer.camera.positionCartographic
+          ? viewer.camera.positionCartographic.longitude * (180 / Math.PI)
+          : 0;
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(fallbackLon, 20, 15000000),
+          orientation: {
+            heading: viewer.camera.heading,
+            pitch: Cesium.Math.toRadians(-90),
+            roll: 0
+          },
+          duration: 2.0
+        });
+      }
     }
   }, [selectedEvent, phase, events]);
 
@@ -349,7 +581,7 @@ export default function CesiumGlobe({
     const viewer = viewerRef.current;
     if (!viewer) return;
     const camera = viewer.camera;
-    const height = camera.positionCartographic.height;
+    const height = camera.positionCartographic?.height ?? 3500000;
     camera.zoomIn(height * 0.3);
   };
 
@@ -357,7 +589,7 @@ export default function CesiumGlobe({
     const viewer = viewerRef.current;
     if (!viewer) return;
     const camera = viewer.camera;
-    const height = camera.positionCartographic.height;
+    const height = camera.positionCartographic?.height ?? 3500000;
     camera.zoomOut(height * 0.35);
   };
 

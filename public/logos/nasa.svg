@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 64" fill="none" stroke="#ffffff" stroke-width="10">
+  <path stroke-width="10" d="M6,56V15.8A9,9,0,0,1,23.6,13.3L34.6,50.7A9,9,0,0,0,52.2,48.2V6M78,13.3a9,9,0,0,1,16.8,0M112,50H139.8a12,12,0,0,0,0,-24h-12A12,12,0,0,1,127.8,8H155.6M176.4,13.3a9,9,0,0,1,16.8,0" />
+  <path d="M82,56V10M180.4,56V10" transform="skewX(-17)" />
+  <path d="M90.8,56V10M189.2,56V10" transform="skewX(17)" />
+</svg>

@@ -10,6 +10,7 @@ import EventList from './ui/EventList';
 import EventDetailPanel from './ui/EventDetailPanel';
 import TimeDisplay from './ui/TimeDisplay';
 import Cursor from './ui/Cursor';
+import LogoLoop from './ui/LogoLoop';
 
 import { appReducer, initialState } from './state/appReducer';
 import { fetchEventsByCategory, fetchSources } from './data/eonet';
@@ -21,7 +22,6 @@ import Galaxy from './animations/Galaxy';
 import CountUp from './animations/CountUp';
 import DecryptedText from './animations/DecryptedText';
 import GlitchText from './animations/GlitchText';
-import BlurText from './animations/BlurText';
 import ClickSpark from './animations/ClickSpark';
 import StarBorder from './animations/StarBorder';
 
@@ -46,6 +46,16 @@ const getCategoryColorHex = (id: string): string => {
     default: return '#FFFFFF';
   }
 };
+
+const partnerLogos = [
+  { src: '/logos/nasa.svg', alt: 'NASA', href: 'https://www.nasa.gov' },
+  { src: '/logos/google-maps.svg', alt: 'Google Maps', href: 'https://mapsplatform.google.com' },
+  { src: '/logos/lockheed.svg', alt: 'Lockheed Martin', href: 'https://www.lockheedmartin.com' },
+  { src: '/logos/boeing.svg', alt: 'Boeing', href: 'https://www.boeing.com' },
+  { src: '/logos/airbus.svg', alt: 'Airbus', href: 'https://www.airbus.com' },
+  { src: '/logos/national-geographic.svg', alt: 'National Geographic', href: 'https://www.nationalgeographic.com' },
+  { src: '/logos/siemens.svg', alt: 'Siemens', href: 'https://www.siemens.com' }
+];
 
 export default function App() {
   const [state, dispatch] = useReducer(appReducer, initialState);
@@ -327,13 +337,14 @@ export default function App() {
                       SENTINEL
                     </GlitchText>
                   </h1>
-                  <BlurText
-                    text="A live observation of Earth’s active natural events, sourced from NASA EONET."
-                    delay={70}
-                    className="intro-sub"
-                    direction="bottom"
-                    stepDuration={0.4}
-                  />
+                  <div className="intro-subtitle-container">
+                    <div className="intro-meta-badge">
+                      <span className="badge-blink">●</span> telemetry link active
+                    </div>
+                    <p className="intro-sub-text">
+                      global planetary hazard survey // source: nasa eonet live feed
+                    </p>
+                  </div>
                   <div className="intro-prompt" style={{ marginTop: 'var(--space-6)', display: 'inline-block' }}>
                     <StarBorder speed="4.5s" color="#ffffff" thickness={1}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -343,6 +354,20 @@ export default function App() {
                         </span>
                       </div>
                     </StarBorder>
+                  </div>
+                  <div className="intro-partner-logos" style={{ marginTop: '60px', width: '100%', maxWidth: '440px' }}>
+                    <LogoLoop
+                      logos={partnerLogos}
+                      speed={50}
+                      direction="left"
+                      logoHeight={28}
+                      gap={36}
+                      pauseOnHover
+                      scaleOnHover
+                      fadeOut
+                      fadeOutColor="#000000"
+                      ariaLabel="Sentinel tech stack partners"
+                    />
                   </div>
                 </div>
               </div>
